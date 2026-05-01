@@ -11,16 +11,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.noveltracker.data.local.entity.Goal
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddPlanDialog(
     goals: List<Goal>,
+    selectedDate: Long, // Pass the currently viewed date
     onDismiss: () -> Unit,
     onConfirm: (Long, Long, Int) -> Unit
 ) {
     var selectedGoal by remember { mutableStateOf<Goal?>(null) }
     var duration by remember { mutableStateOf("30") }
+    var hour by remember { mutableStateOf("12") }
+    var minute by remember { mutableStateOf("00") }
     var expanded by remember { mutableStateOf(false) }
 
     AlertDialog(
@@ -58,18 +62,29 @@ fun AddPlanDialog(
                     }
                 }
 
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = hour,
+                        onValueChange = { hour = it },
+                        label = { Text("Hour (0-23)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = minute,
+                        onValueChange = { minute = it },
+                        label = { Text("Minute") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
                 OutlinedTextField(
                     value = duration,
                     onValueChange = { duration = it },
                     label = { Text("Duration (minutes)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
-                )
-                
-                Text(
-                    text = "Start Time: Now (Simplification)",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 4.dp)
                 )
             }
         },
@@ -78,8 +93,17 @@ fun AddPlanDialog(
                 onClick = {
                     val goalId = selectedGoal?.id
                     val durInt = duration.toIntOrNull()
+                    val hInt = hour.toIntOrNull()?.coerceIn(0, 23) ?: 12
+                    val mInt = minute.toIntOrNull()?.coerceIn(0, 59) ?: 0
+                    
                     if (goalId != null && durInt != null) {
-                        onConfirm(goalId, System.currentTimeMillis(), durInt)
+                        val calendar = Calendar.getInstance().apply {
+                            timeInMillis = selectedDate
+                            set(Calendar.HOUR_OF_DAY, hInt)
+                            set(Calendar.MINUTE, mInt)
+                            set(Calendar.SECOND, 0)
+                        }
+                        onConfirm(goalId, calendar.timeInMillis, durInt)
                     }
                 },
                 enabled = selectedGoal != null

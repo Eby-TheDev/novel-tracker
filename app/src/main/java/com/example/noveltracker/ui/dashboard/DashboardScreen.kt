@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -22,6 +23,7 @@ fun DashboardScreen(
     onAddGoalClick: () -> Unit
 ) {
     val goals by viewModel.goals.collectAsState()
+    val currentFilter by viewModel.filterType.collectAsState()
 
     Scaffold(
         floatingActionButton = {
@@ -30,29 +32,55 @@ fun DashboardScreen(
             }
         }
     ) { padding ->
-        if (goals.isEmpty()) {
-            Box(
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            LazyRow(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(text = "No goals yet. Tap + to add one!")
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(goals) { goal ->
-                    GoalCard(
-                        goal = goal,
-                        onProgressUpdate = { viewModel.updateProgress(goal, it) },
-                        onDelete = { viewModel.deleteGoal(goal) }
+                items(GoalFilter.values()) { filter ->
+                    FilterChip(
+                        selected = currentFilter == filter,
+                        onClick = { viewModel.setFilter(filter) },
+                        label = {
+                            Text(
+                                text = when (filter) {
+                                    GoalFilter.ALL -> "All"
+                                    GoalFilter.TODO -> "To Do"
+                                    GoalFilter.IN_PROGRESS -> "In Progress"
+                                    GoalFilter.COMPLETED -> "Completed"
+                                }
+                            )
+                        }
                     )
+                }
+            }
+
+            if (goals.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "No goals found.")
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(goals) { goal ->
+                        GoalCard(
+                            goal = goal,
+                            onProgressUpdate = { viewModel.updateProgress(goal, it) },
+                            onDelete = { viewModel.deleteGoal(goal) }
+                        )
+                    }
                 }
             }
         }
@@ -82,8 +110,8 @@ fun GoalCard(
             }
             Text(text = progressText, style = MaterialTheme.typography.bodyMedium)
 
-            if (goal.totalProgress != null) {
-                val progressValue = goal.currentProgress.toFloat() / goal.totalProgress
+            if (goal.totalProgress != null && goal.totalProgress > 0) {
+                val progressValue = (goal.currentProgress.toFloat() / goal.totalProgress).coerceIn(0f, 1f)
                 val animatedProgress by animateFloatAsState(
                     targetValue = progressValue,
                     label = "progressAnimation"

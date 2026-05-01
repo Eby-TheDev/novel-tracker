@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
 }
 
 sealed class Screen(val route: String, val title: String, val icon: @Composable () -> Unit) {
-    object Dashboard : Screen("dashboard", "Dashboard", { Icon(Icons.Default.Dashboard, contentDescription = null) })
+    object Dashboard : Screen("dashboard", "Dashboard", { Icon(Icons.Default.Home, contentDescription = null) })
     object Schedule : Screen("schedule", "Schedule", { Icon(Icons.Default.List, contentDescription = null) })
 }
 

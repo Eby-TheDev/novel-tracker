@@ -14,10 +14,8 @@ android {
         minSdk 26
         targetSdk 34
         
-        versionCode project.hasProperty('appVersionCode') ? project.property('appVersionCode').toInteger() : 1
-        def baseVersionName = project.hasProperty('appVersionName') ? project.property('appVersionName') : "1.0.0"
-        def suffix = project.hasProperty('versionSuffix') ? project.property('versionSuffix') : ""
-        versionName baseVersionName + suffix
+        versionCode 1
+        versionName "1.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -48,6 +46,12 @@ android {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
+    }
+}
+
+kapt {
+    arguments {
+        arg("room.schemaLocation", "$projectDir/schemas")
     }
 }
 

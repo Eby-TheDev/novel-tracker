@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
 }
 
 sealed class Screen(val route: String, val title: String, val icon: @Composable () -> Unit) {
-    object Dashboard : Screen("dashboard", "Dashboard", { Icon(Icons.Default.Dashboard, contentDescription = null) })
+    object Dashboard : Screen("dashboard", "Dashboard", { Icon(Icons.Default.Home, contentDescription = null) })
     object Schedule : Screen("schedule", "Schedule", { Icon(Icons.Default.List, contentDescription = null) })
 }
 

@@ -12,9 +12,10 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun AddGoalDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, Int?, Long?) -> Unit
+    onConfirm: (String, Int, Int?, Long?) -> Unit
 ) {
     var title by remember { mutableStateOf("") }
+    var currentProgress by remember { mutableStateOf("") }
     var totalProgress by remember { mutableStateOf("") }
     // For simplicity in this prototype, we'll just use a Long for due date or skip it for now.
     // In a real app, we'd use a DatePicker.
@@ -31,6 +32,13 @@ fun AddGoalDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
+                    value = currentProgress,
+                    onValueChange = { currentProgress = it },
+                    label = { Text("Current Progress (Chapters read)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
                     value = totalProgress,
                     onValueChange = { totalProgress = it },
                     label = { Text("Total Chapters (Optional)") },
@@ -43,8 +51,10 @@ fun AddGoalDialog(
             TextButton(
                 onClick = {
                     if (title.isNotBlank()) {
+                        val initialProgress = currentProgress.toIntOrNull() ?: 0
                         onConfirm(
                             title,
+                            initialProgress,
                             totalProgress.toIntOrNull(),
                             null // Due date omitted for simplicity in basic dialog
                         )

@@ -99,8 +99,8 @@ fun MainScreen() {
         if (showAddGoalDialog) {
             AddGoalDialog(
                 onDismiss = { showAddGoalDialog = false },
-                onConfirm = { title, total, due ->
-                    goalViewModel.addGoal(title, total, due)
+                onConfirm = { title, currentProgress, total, due ->
+                    goalViewModel.addGoal(title, currentProgress, total, due)
                     showAddGoalDialog = false
                 }
             )
@@ -108,8 +108,10 @@ fun MainScreen() {
 
         if (showAddPlanDialog) {
             val goals by scheduleViewModel.goals.collectAsState()
+            val selectedDate by scheduleViewModel.selectedDate.collectAsState()
             AddPlanDialog(
                 goals = goals,
+                selectedDate = selectedDate,
                 onDismiss = { showAddPlanDialog = false },
                 onConfirm = { goalId, startTime, duration ->
                     scheduleViewModel.addTaskPlan(goalId, startTime, duration)

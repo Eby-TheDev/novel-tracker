@@ -7,10 +7,9 @@ import com.example.noveltracker.data.local.entity.TaskPlan
 import com.example.noveltracker.data.local.entity.TaskPlanWithGoal
 import com.example.noveltracker.data.repository.GoalRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.util.Calendar
 import javax.inject.Inject
 
 @HiltViewModel
@@ -18,12 +17,25 @@ class ScheduleViewModel @Inject constructor(
     private val repository: GoalRepository
 ) : ViewModel() {
 
-    val taskPlans: StateFlow<List<TaskPlanWithGoal>> = repository.getAllTaskPlans()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    private val _selectedDate = MutableStateFlow(Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.timeInMillis)
+    val selectedDate: StateFlow<Long> = _selectedDate.asStateFlow()
+
+    val taskPlans: StateFlow<List<TaskPlanWithGoal>> = combine(
+        repository.getAllTaskPlans(),
+        _selectedDate
+    ) { allPlans, selectedDayStart ->
+        val selectedDayEnd = selectedDayStart + 24 * 60 * 60 * 1000 - 1
+        allPlans.filter { it.taskPlan.startTime in selectedDayStart..selectedDayEnd }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
 
     val goals: StateFlow<List<Goal>> = repository.getAllGoals()
         .stateIn(
@@ -31,6 +43,14 @@ class ScheduleViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    fun previousDay() {
+        _selectedDate.value -= 24 * 60 * 60 * 1000
+    }
+
+    fun nextDay() {
+        _selectedDate.value += 24 * 60 * 60 * 1000
+    }
 
     fun addTaskPlan(goalId: Long, startTime: Long, duration: Int) {
         viewModelScope.launch {

@@ -5,29 +5,48 @@ import androidx.lifecycle.viewModelScope
 import com.example.noveltracker.data.local.entity.Goal
 import com.example.noveltracker.data.repository.GoalRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+enum class GoalFilter {
+    ALL, TODO, IN_PROGRESS, COMPLETED
+}
 
 @HiltViewModel
 class GoalViewModel @Inject constructor(
     private val repository: GoalRepository
 ) : ViewModel() {
 
-    val goals: StateFlow<List<Goal>> = repository.getAllGoals()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    private val _filterType = MutableStateFlow(GoalFilter.ALL)
+    val filterType: StateFlow<GoalFilter> = _filterType.asStateFlow()
 
-    fun addGoal(title: String, totalProgress: Int?, dueDate: Long?) {
+    val goals: StateFlow<List<Goal>> = combine(
+        repository.getAllGoals(),
+        _filterType
+    ) { allGoals, filter ->
+        when (filter) {
+            GoalFilter.ALL -> allGoals
+            GoalFilter.TODO -> allGoals.filter { it.currentProgress == 0 }
+            GoalFilter.IN_PROGRESS -> allGoals.filter { it.currentProgress > 0 && (it.totalProgress == null || it.currentProgress < it.totalProgress) }
+            GoalFilter.COMPLETED -> allGoals.filter { it.totalProgress != null && it.currentProgress >= it.totalProgress }
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    fun setFilter(filter: GoalFilter) {
+        _filterType.value = filter
+    }
+
+    fun addGoal(title: String, currentProgress: Int, totalProgress: Int?, dueDate: Long?) {
         viewModelScope.launch {
             repository.insertGoal(
                 Goal(
                     title = title,
+                    currentProgress = currentProgress,
                     totalProgress = totalProgress,
                     dueDate = dueDate
                 )

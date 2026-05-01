@@ -30,13 +30,21 @@ jobs:
         run: chmod +x gradlew
         
       - name: Build Debug APK
-        run: ./gradlew assembleDebug -PversionSuffix=-debug
+        run: ./gradlew assembleDebug
+
+      - name: Extract Version Name
+        run: |
+          VERSION=$(grep 'versionName' app/build.gradle | grep -o '"[^"]*"' | tr -d '"' | head -n 1)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Rename APK
+        run: mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/novel-tracker-${{ env.VERSION }}-debug.apk
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
+          name: novel-tracker-${{ env.VERSION }}-debug
+          path: app/build/outputs/apk/debug/novel-tracker-*-debug.apk
 
   build_candidate:
     # Runs on pushes to the base branch (master/main)
@@ -56,13 +64,21 @@ jobs:
         run: chmod +x gradlew
         
       - name: Build Release Candidate (APK)
-        run: ./gradlew assembleRelease -PversionSuffix=-rc
+        run: ./gradlew assembleRelease
+
+      - name: Extract Version Name
+        run: |
+          VERSION=$(grep 'versionName' app/build.gradle | grep -o '"[^"]*"' | tr -d '"' | head -n 1)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Rename APK
+        run: mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/novel-tracker-${{ env.VERSION }}-rc.apk
 
       - name: Upload Candidate APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-candidate
-          path: app/build/outputs/apk/release/*.apk
+          name: novel-tracker-${{ env.VERSION }}-rc
+          path: app/build/outputs/apk/release/novel-tracker-*-rc.apk
 
   build_production:
     # Runs on manual trigger
@@ -87,9 +103,8 @@ jobs:
           if [ -n "${{ github.event.inputs.versionName }}" ]; then
             echo "PROD_VERSION=${{ github.event.inputs.versionName }}" >> $GITHUB_ENV
           else
-            VERSION=$(grep 'appVersionName' gradle.properties | cut -d'=' -f2)
+            VERSION=$(grep 'versionName' app/build.gradle | grep -o '"[^"]*"' | tr -d '"' | head -n 1)
             IFS='.' read -ra ADDR <<< "$VERSION"
-            # Ensure we have 3 parts, default to 0 if missing
             MAJOR=${ADDR[0]:-1}
             MINOR=${ADDR[1]:-0}
             PATCH=${ADDR[2]:-0}
@@ -98,10 +113,13 @@ jobs:
           fi
 
       - name: Build Production Bundle (AAB)
-        run: ./gradlew bundleRelease -PappVersionName=${{ env.PROD_VERSION }}
+        run: ./gradlew bundleRelease
+
+      - name: Rename Bundle
+        run: mv app/build/outputs/bundle/release/app-release.aab app/build/outputs/bundle/release/novel-tracker-${{ env.PROD_VERSION }}.aab
 
       - name: Upload Production Bundle
         uses: actions/upload-artifact@v4
         with:
-          name: app-production
-          path: app/build/outputs/bundle/release/*.aab
+          name: novel-tracker-${{ env.PROD_VERSION }}
+          path: app/build/outputs/bundle/release/novel-tracker-*.aab

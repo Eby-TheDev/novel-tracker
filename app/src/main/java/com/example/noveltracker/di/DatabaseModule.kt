@@ -23,7 +23,9 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "novel_tracker_db"
-        ).build()
+        )
+        // .addMigrations(MIGRATION_1_2) // Add migrations here when upgrading version
+        .build()
     }
 
     @Provides

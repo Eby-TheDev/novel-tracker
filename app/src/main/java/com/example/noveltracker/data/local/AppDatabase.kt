@@ -7,7 +7,7 @@ import com.example.noveltracker.data.local.dao.TaskPlanDao
 import com.example.noveltracker.data.local.entity.Goal
 import com.example.noveltracker.data.local.entity.TaskPlan
 
-@Database(entities = [Goal::class, TaskPlan::class], version = 1, exportSchema = false)
+@Database(entities = [Goal::class, TaskPlan::class], version = 1, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun goalDao(): GoalDao
     abstract fun taskPlanDao(): TaskPlanDao

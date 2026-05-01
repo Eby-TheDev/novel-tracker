@@ -10,7 +10,6 @@ on:
       versionName:
         description: 'Release Version Name (e.g., 1.0.1)'
         required: false
-        default: '1.0.0'
 
 jobs:
   build_debug:
@@ -31,7 +30,7 @@ jobs:
         run: chmod +x gradlew
         
       - name: Build Debug APK
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug -PversionSuffix=-debug
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
@@ -57,7 +56,7 @@ jobs:
         run: chmod +x gradlew
         
       - name: Build Release Candidate (APK)
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleRelease -PversionSuffix=-rc
 
       - name: Upload Candidate APK
         uses: actions/upload-artifact@v4
@@ -81,9 +80,25 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-        
+
+      - name: Determine Production Version
+        id: versioning
+        run: |
+          if [ -n "${{ github.event.inputs.versionName }}" ]; then
+            echo "PROD_VERSION=${{ github.event.inputs.versionName }}" >> $GITHUB_ENV
+          else
+            VERSION=$(grep 'appVersionName' gradle.properties | cut -d'=' -f2)
+            IFS='.' read -ra ADDR <<< "$VERSION"
+            # Ensure we have 3 parts, default to 0 if missing
+            MAJOR=${ADDR[0]:-1}
+            MINOR=${ADDR[1]:-0}
+            PATCH=${ADDR[2]:-0}
+            NEW_PATCH=$((PATCH + 1))
+            echo "PROD_VERSION=$MAJOR.$MINOR.$NEW_PATCH" >> $GITHUB_ENV
+          fi
+
       - name: Build Production Bundle (AAB)
-        run: ./gradlew bundleRelease
+        run: ./gradlew bundleRelease -PappVersionName=${{ env.PROD_VERSION }}
 
       - name: Upload Production Bundle
         uses: actions/upload-artifact@v4

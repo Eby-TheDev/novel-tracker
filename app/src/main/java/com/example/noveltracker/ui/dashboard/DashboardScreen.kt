@@ -137,7 +137,11 @@ fun GoalCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-                TextButton(onClick = { onProgressUpdate(goal.currentProgress + 1) }) {
+                val isCompleted = goal.totalProgress != null && goal.currentProgress >= goal.totalProgress
+                TextButton(
+                    onClick = { onProgressUpdate(goal.currentProgress + 1) },
+                    enabled = !isCompleted
+                ) {
                     Text("+1 Progress")
                 }
                 TextButton(onClick = onDelete) {

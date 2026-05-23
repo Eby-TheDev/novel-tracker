@@ -68,6 +68,25 @@ class GoalViewModel @Inject constructor(
         }
     }
 
+    fun updateGoalDetails(goal: Goal, title: String, currentProgress: Int, totalProgress: Int?, dueDate: Long?) {
+        val validatedProgress = if (totalProgress != null) {
+            currentProgress.coerceIn(0, totalProgress)
+        } else {
+            currentProgress.coerceAtLeast(0)
+        }
+        
+        viewModelScope.launch {
+            repository.updateGoal(
+                goal.copy(
+                    title = title,
+                    currentProgress = validatedProgress,
+                    totalProgress = totalProgress,
+                    dueDate = dueDate
+                )
+            )
+        }
+    }
+
     fun deleteGoal(goal: Goal) {
         viewModelScope.launch {
             repository.deleteGoal(goal)

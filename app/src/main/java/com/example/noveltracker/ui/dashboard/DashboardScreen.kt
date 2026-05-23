@@ -1,6 +1,7 @@
 package com.example.noveltracker.ui.dashboard
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,6 +25,18 @@ fun DashboardScreen(
 ) {
     val goals by viewModel.goals.collectAsState()
     val currentFilter by viewModel.filterType.collectAsState()
+    var editingGoal by remember { mutableStateOf<Goal?>(null) }
+
+    if (editingGoal != null) {
+        EditGoalDialog(
+            goal = editingGoal!!,
+            onDismiss = { editingGoal = null },
+            onConfirm = { title, currentProgress, totalProgress, dueDate ->
+                viewModel.updateGoalDetails(editingGoal!!, title, currentProgress, totalProgress, dueDate)
+                editingGoal = null
+            }
+        )
+    }
 
     Scaffold(
         floatingActionButton = {
@@ -78,7 +91,8 @@ fun DashboardScreen(
                         GoalCard(
                             goal = goal,
                             onProgressUpdate = { viewModel.updateProgress(goal, it) },
-                            onDelete = { viewModel.deleteGoal(goal) }
+                            onDelete = { viewModel.deleteGoal(goal) },
+                            onCardClick = { editingGoal = goal }
                         )
                     }
                 }
@@ -91,10 +105,13 @@ fun DashboardScreen(
 fun GoalCard(
     goal: Goal,
     onProgressUpdate: (Int) -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onCardClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCardClick() }
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
